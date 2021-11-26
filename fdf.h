@@ -6,7 +6,7 @@
 /*   By: soumanso <soumanso@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/18 00:41:04 by soumanso          #+#    #+#             */
-/*   Updated: 2021/11/24 20:58:37 by soumanso         ###   ########lyon.fr   */
+/*   Updated: 2021/11/26 17:13:13 by soumanso         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,7 +20,7 @@ t_s64	get_time(void);
 
 /* Math */
 
-typedef union s_vec2f
+typedef union u_vec2f
 {
 	t_f32		n[2];
 	struct
@@ -39,7 +39,7 @@ t_vec2f	vec2f_neg(t_vec2f v);
 t_f32	vec2f_len(t_vec2f v);
 t_vec2f	vec2f_normalize(t_vec2f v);
 
-typedef union s_vec3f
+typedef union u_vec3f
 {
 	t_f32		n[3];
 	struct
@@ -59,7 +59,7 @@ t_vec3f	vec3f_neg(t_vec3f v);
 t_f32	vec3f_len(t_vec3f v);
 t_vec3f	vec3f_normalize(t_vec3f v);
 
-typedef union s_vec4f
+typedef union u_vec4f
 {
 	t_f32		n[4];
 	struct
@@ -76,7 +76,7 @@ t_vec4f	vec4f_zero(void);
 
 /* Matrices are column-major in memory! */
 
-typedef union s_mat4f
+typedef union u_mat4f
 {
 	t_f32		n[4][4];
 	struct
@@ -132,12 +132,14 @@ t_mat4f	mat4f_mul_mat4f(t_mat4f a, t_mat4f b);
 t_mat4f	mat4f_transpose(t_mat4f m);
 /* t_mat4f mat4f_inverse(t_mat4f m); */
 t_mat4f	mat4f_ortho(t_f32 width, t_f32 height);
+t_mat4f	mat4f_perspective(t_f32 fov, t_f32 aspect, t_f32 znear, t_f32 zfar);
 t_mat4f	mat4f_axis_angle(t_vec3f axis, t_f32 angle);
+t_mat4f	mat4f_rotate_euler(t_vec3f euler);
 t_mat4f	mat4f_translate(t_vec3f t);
 
 /* Graphics */
 
-typedef union s_rgba
+typedef union u_rgba
 {
 	t_u32	value;
 	struct
@@ -177,9 +179,12 @@ typedef struct s_fdf
 	void	*win;
 	t_s64	width;
 	t_s64	height;
+	t_f32	aspect_ratio;
+	t_f32	scale;
 	t_frame	front;
 	t_frame	back;
 	t_vec3f	camera_position;
+	t_vec3f	camera_euler;
 	t_mat4f	view;
 	t_mat4f	projection;
 	t_mat4f	view_projection;

@@ -6,7 +6,7 @@
 /*   By: soumanso <soumanso@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/24 18:09:50 by soumanso          #+#    #+#             */
-/*   Updated: 2021/11/24 19:52:10 by soumanso         ###   ########lyon.fr   */
+/*   Updated: 2021/11/26 16:04:15 by soumanso         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,11 +34,11 @@ static t_s64	count_points(t_str str)
 	return (i);
 }
 
-static t_s64	read_line(t_fdf *fdf, t_cstr str, t_int y)
+static t_s64	read_line(t_fdf *fdf, t_cstr str, t_int z)
 {
 	t_s64	i;
 	t_int	x;
-	t_int	z;
+	t_int	y;
 	
 	i = 0;
 	x = 0;
@@ -53,8 +53,8 @@ static t_s64	read_line(t_fdf *fdf, t_cstr str, t_int y)
 		}
 		if (!str[i])
 			return (i);
-		i += ft_str_to_int (str + i, &z);
-		fdf->points[y * fdf->map_width + x] = vec3f (x, y, z);
+		i += ft_str_to_int (str + i, &y);
+		fdf->points[z * fdf->map_width + x] = vec3f (x, y, z);
 		x += 1;
 	}
 	return (i);

@@ -1,7 +1,7 @@
 NAME = fdf
 SRC_FILES = source/main.c source/draw.c source/time.c source/map.c \
 	source/mat4f/axis_angle.c source/mat4f/identity.c source/mat4f/multiply.c\
-	source/mat4f/ortho.c source/mat4f/translate.c source/mat4f/transpose.c\
+	source/mat4f/ortho.c source/mat4f/perspective.c source/mat4f/translate.c source/mat4f/transpose.c\
 	source/vec3f/add_sub_mul.c source/vec3f/normalize.c source/vec3f/vec3f.c\
 	source/vec2f/add_sub_mul.c source/vec2f/normalize.c source/vec2f/vec2f.c
 OBJ_FILES = $(SRC_FILES:.c=.o)

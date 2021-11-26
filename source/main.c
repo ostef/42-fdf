@@ -6,7 +6,7 @@
 /*   By: soumanso <soumanso@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/18 01:33:10 by soumanso          #+#    #+#             */
-/*   Updated: 2021/11/24 21:12:59 by soumanso         ###   ########lyon.fr   */
+/*   Updated: 2021/11/26 17:54:07 by soumanso         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,8 +83,13 @@ static void	print_mat4f(t_mat4f m)
 
 void	fdf_calc_matrices(t_fdf *fdf)
 {
-	fdf->view = mat4f_translate (vec3f_neg (fdf->camera_position));
-	fdf->projection = mat4f_ortho ((t_f32)fdf->width, (t_f32)fdf->height);
+	fdf->aspect_ratio = fdf->width / fdf->height;
+	fdf->view = mat4f_mul_mat4f (
+			mat4f_translate (vec3f_neg (fdf->camera_position)),
+			mat4f_rotate_euler (vec3f_neg (fdf->camera_euler))
+		);
+	//fdf->projection = mat4f_ortho (fdf->width / fdf->scale, fdf->height / fdf->scale);
+	fdf->projection = mat4f_perspective (60, fdf->aspect_ratio, 0.1, 1000);
 	fdf->view_projection = mat4f_mul_mat4f (fdf->projection, fdf->view);
 }
 
@@ -99,6 +104,39 @@ static void	swap_buffers(t_fdf *fdf)
 	mlx_do_sync (fdf->mlx);
 }
 
+static t_vec2f	cam_to_screen(t_fdf *fdf, t_vec3f p)
+{
+	return (vec2f (
+		ft_minf (fdf->width - 1, (p.x + 1) * 0.5 * fdf->width),
+		ft_minf (fdf->height - 1, (p.y + 1) * 0.5 * fdf->height)));
+}
+
+static t_vec3f	project(t_mat4f m, t_vec3f p)
+{
+	t_vec4f	p4;
+
+	p4 = vec4f (p.x, p.y, p.z, 1);
+	p4 = mat4f_mul_vec4f (m, p4);
+	return (vec3f (p4.x / p4.w, p4.y / p4.w, p4.z / p4.w));
+}
+
+static void	draw_line3d(t_fdf *fdf, t_vec3f p0, t_vec3f p1, t_rgba color)
+{
+	t_vec3f	proj0;
+	t_vec3f	proj1;
+
+	proj0 = project (fdf->view_projection, p0);
+	proj1 = project (fdf->view_projection, p1);
+	draw_line (&fdf->back, cam_to_screen (fdf, proj0), cam_to_screen (fdf, proj1), color);
+}
+
+static void	draw_axes(t_fdf *fdf)
+{
+	draw_line3d (fdf, vec3f (0, 0, 0), vec3f (1, 0, 0), rgb (255, 0, 0));
+	draw_line3d (fdf, vec3f (0, 0, 0), vec3f (0, 1, 0), rgb (0, 255, 0));
+	draw_line3d (fdf, vec3f (0, 0, 0), vec3f (0, 0, 1), rgb (0, 0, 255));
+}
+
 static int	render_loop(t_fdf *fdf)
 {
 	t_s64	start_time;
@@ -110,6 +148,8 @@ static int	render_loop(t_fdf *fdf)
 	ft_reset_temp_storage ();
 	clear_frame (&fdf->back, rgb (0, 0, 0));
 	fdf_calc_matrices (fdf);
+	draw_axes (fdf);
+	//printf ("%f\n", fdf->scale);
 	x = 0;
 	while (x < fdf->map_width)
 	{
@@ -117,11 +157,16 @@ static int	render_loop(t_fdf *fdf)
 		while (y < fdf->map_height)
 		{
 			t_vec3f	p0 = fdf->points[y * fdf->map_width + x];
-			t_vec4f	p1 = mat4f_mul_vec4f (fdf->view_projection, vec4f (p0.x, p0.y, p0.z, 1));
-			printf ("p0: %.2f %.2f %.2f\n", p0.x, p0.y, p0.z);
-			printf ("p1: %.2f %.2f %.2f %.2f\n", p1.x, p1.y, p1.z, p1.w);
-			//draw_line (&fdf->back, vec2f (10, 10), vec2f (100, 100), rgb (255, 255, 255));
-			draw_circle (&fdf->back, vec2f (p1.x * 100, p1.z * 100), 10, rgb (255, 255, 255));
+			if (x != fdf->map_width - 1)
+			{
+				t_vec3f	p1 = fdf->points[y * fdf->map_width + (x + 1)];
+				draw_line3d (fdf, p0, p1, rgb (255, 0, 0));
+			}
+			if (y != fdf->map_height - 1)
+			{
+				t_vec3f	p1 = fdf->points[(y + 1) * fdf->map_width + x];
+				draw_line3d (fdf, p0, p1, rgb (255, 0, 0));
+			}
 			y += 1;
 		}
 		x += 1;
@@ -129,6 +174,52 @@ static int	render_loop(t_fdf *fdf)
 	swap_buffers (fdf);
 	end_time = get_time ();
 	//ft_println ("Frame took %d ms.", end_time - start_time);
+	return (0);
+}
+
+#define KC_Q 12
+#define KC_W 13
+#define KC_E 14
+#define KC_A 0
+#define KC_S 1
+#define KC_D 2
+#define KC_SPACE 49
+#define KC_CTRL 256
+#define KC_UP 126
+#define KC_DOWN 125
+#define KC_LEFT 123
+#define KC_RIGHT 124
+#define CAM_SPEED 0.5
+#define CAM_ROT_SPEED 0.01
+
+static int	key_hook(int key_code, t_fdf *fdf)
+{
+	(void)fdf;
+	if (key_code == KC_W)
+		fdf->camera_position.z += CAM_SPEED;
+	else if (key_code == KC_S)
+		fdf->camera_position.z -= CAM_SPEED;
+	else if (key_code == KC_D)
+		fdf->camera_position.x += CAM_SPEED;
+	else if (key_code == KC_A)
+		fdf->camera_position.x -= CAM_SPEED;
+	else if (key_code == KC_E)
+		fdf->camera_position.y += CAM_SPEED;
+	else if (key_code == KC_Q)
+		fdf->camera_position.y -= CAM_SPEED;
+	else if (key_code == KC_UP)
+		fdf->camera_euler.x += PI * CAM_ROT_SPEED;
+	else if (key_code == KC_DOWN)
+		fdf->camera_euler.x -= PI * CAM_ROT_SPEED;
+	else if (key_code == KC_LEFT)
+		fdf->camera_euler.y += PI * CAM_ROT_SPEED;
+	else if (key_code == KC_RIGHT)
+		fdf->camera_euler.y -= PI * CAM_ROT_SPEED;
+	else if (key_code == KC_SPACE)
+		fdf->scale = ft_maxf (fdf->scale * 2, 1);
+	else if (key_code == KC_CTRL)
+		fdf->scale = ft_maxf (fdf->scale / 2, 1);
+	ft_println ("key_code is %i.", key_code);
 	return (0);
 }
 
@@ -142,12 +233,19 @@ int	main(int argc, char **args)
 		return (1);
 	}
 	ft_memset (&fdf, 0, sizeof (t_fdf));
-	if (!fdf_init (&fdf, 1920, 1080))
+	fdf.scale = 8000;
+	//fdf.camera_position.x = -10;
+	//fdf.camera_position.y = -10;
+	fdf.camera_position.z = -10;
+	//fdf.camera_euler.x = PI * 0.1;
+	//fdf.camera_euler.y = PI * 0.3;
+	if (!fdf_init (&fdf, 640, 480))
 	{
 		ft_println ("Error: Could not initialize mlx.");
 		return (1);
 	}
 	parse_map (&fdf, args[1]);
+	mlx_hook(fdf.win, 2, 1L<<0, key_hook, &fdf);
 	mlx_loop_hook (fdf.mlx, render_loop, &fdf);
 	mlx_loop (fdf.mlx);
 	return (0);
