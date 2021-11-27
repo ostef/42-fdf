@@ -6,7 +6,7 @@
 /*   By: soumanso <soumanso@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/18 02:57:43 by soumanso          #+#    #+#             */
-/*   Updated: 2021/11/24 21:10:12 by soumanso         ###   ########lyon.fr   */
+/*   Updated: 2021/11/26 17:58:53 by soumanso         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,6 +56,8 @@ void	draw_pt(t_frame *f, t_vec2f pt, t_rgba color)
 {
 	t_s64	off;
 
+	if (ft_is_nan (pt.x) || ft_is_nan (pt.y))
+		return ;
 	if (pt.x < 0 || pt.x >= f->width || pt.y < 0 || pt.y >= f->height)
 		return ;
 	off = ((t_s64)pt.y * f->line_length + (t_s64)pt.x * (f->bits_per_px / 8));

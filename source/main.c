@@ -6,7 +6,7 @@
 /*   By: soumanso <soumanso@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/18 01:33:10 by soumanso          #+#    #+#             */
-/*   Updated: 2021/11/26 17:54:07 by soumanso         ###   ########lyon.fr   */
+/*   Updated: 2021/11/26 18:16:06 by soumanso         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -107,8 +107,8 @@ static void	swap_buffers(t_fdf *fdf)
 static t_vec2f	cam_to_screen(t_fdf *fdf, t_vec3f p)
 {
 	return (vec2f (
-		ft_minf (fdf->width - 1, (p.x + 1) * 0.5 * fdf->width),
-		ft_minf (fdf->height - 1, (p.y + 1) * 0.5 * fdf->height)));
+		(p.x + 1) * 0.5 * fdf->width,
+		(p.y + 1) * 0.5 * fdf->height));
 }
 
 static t_vec3f	project(t_mat4f m, t_vec3f p)
@@ -157,15 +157,17 @@ static int	render_loop(t_fdf *fdf)
 		while (y < fdf->map_height)
 		{
 			t_vec3f	p0 = fdf->points[y * fdf->map_width + x];
+			t_u8	r = 10 + (p0.x / fdf->map_width) * 245;
+			t_u8	g = 10 + (p0.z / fdf->map_height) * 245;
 			if (x != fdf->map_width - 1)
 			{
 				t_vec3f	p1 = fdf->points[y * fdf->map_width + (x + 1)];
-				draw_line3d (fdf, p0, p1, rgb (255, 0, 0));
+				draw_line3d (fdf, p0, p1, rgb (r, p0.y, g));
 			}
 			if (y != fdf->map_height - 1)
 			{
 				t_vec3f	p1 = fdf->points[(y + 1) * fdf->map_width + x];
-				draw_line3d (fdf, p0, p1, rgb (255, 0, 0));
+				draw_line3d (fdf, p0, p1, rgb (r, p0.y, g));
 			}
 			y += 1;
 		}
@@ -239,7 +241,7 @@ int	main(int argc, char **args)
 	fdf.camera_position.z = -10;
 	//fdf.camera_euler.x = PI * 0.1;
 	//fdf.camera_euler.y = PI * 0.3;
-	if (!fdf_init (&fdf, 640, 480))
+	if (!fdf_init (&fdf, 1920, 1080))
 	{
 		ft_println ("Error: Could not initialize mlx.");
 		return (1);
