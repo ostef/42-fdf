@@ -6,7 +6,7 @@
 /*   By: soumanso <soumanso@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/18 01:33:10 by soumanso          #+#    #+#             */
-/*   Updated: 2021/11/26 18:16:06 by soumanso         ###   ########lyon.fr   */
+/*   Updated: 2021/12/08 17:37:23 by soumanso         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -156,6 +156,7 @@ static int	render_loop(t_fdf *fdf)
 		y = 0;
 		while (y < fdf->map_height)
 		{
+			//ft_println ("(%i, %i)", (t_int)x, (t_int)y);
 			t_vec3f	p0 = fdf->points[y * fdf->map_width + x];
 			t_u8	r = 10 + (p0.x / fdf->map_width) * 245;
 			t_u8	g = 10 + (p0.z / fdf->map_height) * 245;

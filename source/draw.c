@@ -6,7 +6,7 @@
 /*   By: soumanso <soumanso@student.42lyon.fr>      +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/11/18 02:57:43 by soumanso          #+#    #+#             */
-/*   Updated: 2021/11/26 17:58:53 by soumanso         ###   ########lyon.fr   */
+/*   Updated: 2021/12/08 17:32:57 by soumanso         ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -137,8 +137,89 @@ static void	draw_line_high(t_frame *f, t_vec2f p1, t_vec2f p2, t_rgba color)
 	}
 }
 
+static t_u8	compute_out_code(t_frame *f, t_vec2f p)
+{
+	t_u8	code;
+
+	code = 0;
+	if (p.x < 0)
+		code |= 1;
+	else if (p.x > f->width)
+		code |= 2;
+	if (p.y < 0)
+		code |= 4;
+	else if (p.y > f->height)
+		code |= 8;
+	return (code);
+}
+
+static t_bool	clip_line(t_frame *f, t_vec2f *p1, t_vec2f *p2)
+{
+	t_u8	c1;
+	t_u8	c2;
+	t_u8	c;
+	t_vec2f	p;
+
+	c1 = compute_out_code (f, *p1);
+	c2 = compute_out_code (f, *p2);
+	while (TRUE)
+	{
+		//ft_println ("ca boucle ma gueule.");
+		if (!(c1 | c2))
+		{
+			//ft_println ("ca return true ma gueule.");
+			return (TRUE);
+		}
+		else if (c1 & c2)
+		{
+			//ft_println ("ca return false ma gueule.");
+			return (FALSE);
+		}
+		else
+		{
+			c = (t_u8)ft_max (c1, c2);
+			if (c & 8)
+			{
+				p.x = p1->x + (p2->x - p1->x) * (f->height - p1->y) / (p2->y - p1->y);
+				p.y = f->height;
+			}
+			else if (c & 4)
+			{
+				p.x = p1->x + (p2->x - p1->x) * (-p1->y) / (p2->y - p1->y);
+				p.y = 0;
+			}
+			else if (c & 2)
+			{
+				p.y = p1->y + (p2->y - p1->y) * (f->width - p1->x) / (p2->x - p1->x);
+				p.x = f->width;
+			}
+			else if (c & 1)
+			{
+				p.y = p1->y + (p2->y - p1->y) * (-p1->x) / (p2->x - p1->x);
+				p.x = 0;
+			}
+			if (c == c1)
+			{
+				p1->x = p.x;
+				p1->y = p.y;
+				c1 = compute_out_code (f, *p1);
+			}
+			else
+			{
+				p2->x = p.x;
+				p2->y = p.y;
+				c2 = compute_out_code (f, *p2);
+			}
+		}
+	}
+	return (FALSE);
+}
+
 void	draw_line(t_frame *f, t_vec2f p1, t_vec2f p2, t_rgba color)
 {
+	//t_s64 start_time = get_time ();
+	if (!clip_line (f, &p1, &p2))
+		return ;
 	if (ft_absf (p2.y - p1.y) < ft_absf (p2.x - p1.x))
 	{
 		if (p1.x > p2.x)
@@ -153,4 +234,6 @@ void	draw_line(t_frame *f, t_vec2f p1, t_vec2f p2, t_rgba color)
 		else
 			draw_line_high (f, p1, p2, color);
 	}
+	//t_s64 end_time = get_time ();
+	//ft_println ("draw_line: %i ms", (t_int)(end_time - start_time));
 }
